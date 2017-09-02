@@ -1,4 +1,22 @@
+import itertools
+
 assignments = []
+rows = "ABCDEFGHI"
+cols = "123456789"
+
+def cross(A, B):
+    "Cross product of elements in A and elements in B."
+    return [s+t for s in A for t in B]
+
+boxes = cross(rows, cols)
+row_units = [cross(r, cols) for r in rows]
+column_units = [cross(rows, c) for c in cols]
+square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
+diagonal_units = [[rows[i] + cols[i] for i in range(len(rows))],
+    [rows[i] + cols[len(rows)-1-i] for i in range(len(rows))]]
+unitlist = diagonal_units + row_units + column_units + square_units
+units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
+peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
 
 def assign_value(values, box, value):
     """
@@ -24,32 +42,48 @@ def naked_twins(values):
         the values dictionary with the naked twins eliminated from peers.
     """
     for unit in unitlist:
-            # Find all instances of naked twins
-            value_list = [values[box] for box in unit]
-            twin_tuple = [(index, value) for index, value in enumerate(value_list) if value_list.count(value) is 2] #중복 값이 2개 있는 박스의 인덱스와 값
-            twin_index_list = [tup[0] for tup in twin_tuple]
-            twin_value_set = set([tup[1] for tup in twin_tuple])
+        # Find all instances of naked twins
+        value_list = [values[box] for box in unit]
+        twin_tuple = [(index, value) for index, value in enumerate(value_list) if value_list.count(value) is 2 and len(str(value)) is 2]
 
-            # Eliminate the naked twins as possibilities for their peers
-            for index, box in enumerate(unit):
-                if index not in twin_index_list:
-                    for value in twin_value_set:
-                        if len(value) is 2:
-                            values[box] = values[box].replace(value[0], "")
-                            values[box] = values[box].replace(value[1], "")
-                elif index in twin_index_list:
-                    temp_set = twin_value_set.copy()
-                    temp_set.remove(values[box])
-                    for value in temp_set:
-                        if len(value) is 2:
-                            values[box] = values[box].replace(value[0], "")
-                            values[box] = values[box].replace(value[1], "")
+        if not twin_tuple:
+            continue
+
+        twin_index_list = [tup[0] for tup in twin_tuple]
+        twin_value_set = set([tup[1] for tup in twin_tuple])
+
+        # Eliminate the naked twins as possibilities for their peers
+        for index, box in enumerate(unit):
+            if index not in twin_index_list:
+                for value in twin_value_set:
+                    if len(value) is 2:
+                        values[box] = values[box].replace(value[0], "")
+                        values[box] = values[box].replace(value[1], "")
+            elif index in twin_index_list:
+                temp_set = twin_value_set.copy()
+                temp_set.remove(values[box])
+                for value in temp_set:
+                    if len(value) is 2:
+                        values[box] = values[box].replace(value[0], "")
+                        values[box] = values[box].replace(value[1], "")
+
+    # for unit in unitlist:
+    #     # Find all boxes with two digits remaining as possibilities
+    #     pairs = [box for box in unit if len(values[box]) == 2]
+    #     # Pairwise combinations
+    #     poss_twins = [list(pair) for pair in itertools.combinations(pairs, 2)]
+    #     for pair in poss_twins:
+    #         box1 = pair[0]
+    #         box2 = pair[1]
+    #         # Find the naked twins
+    #         if values[box1] == values[box2]:
+    #             for box in unit:
+    #                 # Eliminate the naked twins as possibilities for peers
+    #                 if box != box1 and box != box2:
+    #                     for digit in values[box1]:
+    #                         values[box] = values[box].replace(digit,'')
 
     return values
-
-def cross(A, B):
-    "Cross product of elements in A and elements in B."
-    return [s+t for s in A for t in B]
 
 def grid_values(grid):
     """
@@ -182,23 +216,14 @@ def solve(grid):
     values = grid_values(grid)
     solved_grid = search(values)
 
-    return solved_grid
+    if solved_grid:
+        return solved_grid
+    else:
+        return False
 
 if __name__ == '__main__':
-    rows = "ABCDEFGHI"
-    cols = "123456789"
-
-    boxes = cross(rows, cols)
-    row_units = [cross(r, cols) for r in rows]
-    column_units = [cross(rows, c) for c in cols]
-    square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
-    diagonal_units = [[rows[i] + cols[i] for i in range(len(rows))],
-        [rows[i] + cols[len(rows)-1-i] for i in range(len(rows))]]
-    unitlist = diagonal_units + row_units + column_units + square_units
-    units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
-    peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
-
-    diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
+    # diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
+    diag_sudoku_grid = "9.1....8.8.5.7..4.2.4....6...7......5..............83.3..6......9................"
     display(solve(diag_sudoku_grid))
 
     try:
