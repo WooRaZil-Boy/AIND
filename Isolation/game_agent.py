@@ -211,7 +211,7 @@ class MinimaxPlayer(IsolationPlayer):
 
         return not bool(game.get_legal_moves())
 
-    def min_value(self, game, depth): #상대방의 턴. 상대방은 결과가 최소(상대방 승리)가 되는 값(-1)을 찾아야 한다.
+    def min_value(self, game, depth):
         """
         Return the value for a win (+1) if the game is over,
         otherwise return the minimum value over all legal child
@@ -287,8 +287,8 @@ class MinimaxPlayer(IsolationPlayer):
         best_score = float("-inf")
         best_move = None
 
-        for m in game.get_legal_moves(): #이동할 수 있는 모든 곳 중에서
-            v = self.min_value(game.forecast_move(m), depth-1) #max가 되는 값을 찾아야 하므로 다음 레이어의 min_value를 찾아야 한다.
+        for m in game.get_legal_moves():
+            v = self.min_value(game.forecast_move(m), depth-1)
             if v > best_score:
                 best_score = v
                 best_move = m
@@ -339,15 +339,27 @@ class AlphaBetaPlayer(IsolationPlayer):
         # in case the search fails due to timeout
         best_move = (-1, -1)
 
-        try:
-            # The try/except block will automatically catch the exception
-            # raised when the timer is about to expire.
-            return self.alphabeta(game, self.search_depth)
+        # try:
+        #     # The try/except block will automatically catch the exception
+        #     # raised when the timer is about to expire.
+        #     depth = 1
+        #
+        #     while True:
+        #         best_move = self.alphabeta(game, depth)
+        #         depth+=1
+        #
+        # except SearchTimeout:
+        #     pass  # Handle any actions required after timeout as needed
+        #
+        # # Return the best move from the last completed search iteration
+        # return best_move
 
-        except SearchTimeout:
-            pass  # Handle any actions required after timeout as needed
-
-        # Return the best move from the last completed search iteration
+        # try depth from 1 to 10000
+        for i in range(1, 10000):
+            try:
+                best_move = self.alphabeta(game, i)
+            except SearchTimeout:
+                break
         return best_move
 
     def terminal_test(self, game):
@@ -450,10 +462,12 @@ class AlphaBetaPlayer(IsolationPlayer):
         best_score = float("-inf")
         best_move = (-1, -1)
 
-        for m in game.get_legal_moves(): #이동할 수 있는 모든 곳 중에서
-            v = self.min_value(game.forecast_move(m), depth-1, alpha, beta) #max가 되는 값을 찾아야 하므로 다음 레이어의 min_value를 찾아야 한다.
+        for m in game.get_legal_moves():
+            v = self.min_value(game.forecast_move(m), depth-1, alpha, beta)
             if v > best_score:
                 best_score = v
                 best_move = m
+
+            alpha = max(alpha, v) #이 부분이랑 위에 피드백 한 부분********************
 
         return best_move
