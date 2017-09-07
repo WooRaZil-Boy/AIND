@@ -45,10 +45,7 @@ def custom_score(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    own_moves = len(game.get_legal_moves(player))
-    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-
-    return float(own_moves - opp_moves)
+    return float(len(game.get_legal_moves(player)))
 
 
 def custom_score_2(game, player):
@@ -83,7 +80,7 @@ def custom_score_2(game, player):
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
 
-    return float(2*own_moves - opp_moves)
+    return float(own_moves - 2*opp_moves)
 
 
 def custom_score_3(game, player):
@@ -115,10 +112,10 @@ def custom_score_3(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    own_moves = len(game.get_legal_moves(player))
-    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    w, h = game.width / 2., game.height / 2.
+    y, x = game.get_player_location(player)
 
-    return float(own_moves - 2*opp_moves)
+    return float((h - y)**2 + (w - x)**2)
 
 
 class IsolationPlayer:
@@ -339,27 +336,19 @@ class AlphaBetaPlayer(IsolationPlayer):
         # in case the search fails due to timeout
         best_move = (-1, -1)
 
-        # try:
-        #     # The try/except block will automatically catch the exception
-        #     # raised when the timer is about to expire.
-        #     depth = 1
-        #
-        #     while True:
-        #         best_move = self.alphabeta(game, depth)
-        #         depth+=1
-        #
-        # except SearchTimeout:
-        #     pass  # Handle any actions required after timeout as needed
-        #
-        # # Return the best move from the last completed search iteration
-        # return best_move
+        try:
+            # The try/except block will automatically catch the exception
+            # raised when the timer is about to expire.
+            depth = 1
 
-        # try depth from 1 to 10000
-        for i in range(1, 10000):
-            try:
-                best_move = self.alphabeta(game, i)
-            except SearchTimeout:
-                break
+            while True:
+                best_move = self.alphabeta(game, depth)
+                depth+=1
+
+        except SearchTimeout:
+            pass  # Handle any actions required after timeout as needed
+
+        # Return the best move from the last completed search iteration
         return best_move
 
     def terminal_test(self, game):
@@ -468,6 +457,6 @@ class AlphaBetaPlayer(IsolationPlayer):
                 best_score = v
                 best_move = m
 
-            alpha = max(alpha, v) #이 부분이랑 위에 피드백 한 부분********************
+            alpha = max(alpha, v)
 
         return best_move
