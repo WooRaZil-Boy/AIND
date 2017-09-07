@@ -3,6 +3,7 @@ test your agent's strength against a set of known agents using tournament.py
 and include the results in your report.
 """
 import random
+import math
 
 
 class SearchTimeout(Exception):
@@ -45,7 +46,16 @@ def custom_score(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    return float(len(game.get_legal_moves(player)))
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+
+    y1, x1 = game.get_player_location(player)
+    y2, x2 = game.get_player_location(game.get_opponent(player))
+
+    own_distance_from_center = math.sqrt((x1 - game.width/2)**2 + (y1 - game.height/2)**2)
+    opp_distance_from_center = math.sqrt((x2 - game.width/2)**2 + (y2 - game.height/2)**2)
+
+    return - own_distance_from_center + opp_distance_from_center + own_moves - opp_moves
 
 
 def custom_score_2(game, player):
@@ -79,8 +89,9 @@ def custom_score_2(game, player):
 
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    blank_spaces = len(game.get_blank_spaces())
 
-    return float(own_moves - 2*opp_moves)
+    return float(blank_spaces + own_moves - opp_moves)
 
 
 def custom_score_3(game, player):
@@ -112,10 +123,15 @@ def custom_score_3(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    w, h = game.width / 2., game.height / 2.
-    y, x = game.get_player_location(player)
+    own_moves = game.get_legal_moves(player)
+    opp_moves = game.get_legal_moves(game.get_opponent(player))
 
-    return float((h - y)**2 + (w - x)**2)
+    similar_count = 0
+    for move in opp_moves:
+        if move in own_moves:
+            similar_count += 1
+
+    return float(len(own_moves) - len(opp_moves) + similar_count)
 
 
 class IsolationPlayer:
