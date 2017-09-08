@@ -55,7 +55,7 @@ def custom_score(game, player):
     own_distance_from_center = math.sqrt((x1 - game.width/2)**2 + (y1 - game.height/2)**2)
     opp_distance_from_center = math.sqrt((x2 - game.width/2)**2 + (y2 - game.height/2)**2)
 
-    return - own_distance_from_center + opp_distance_from_center + own_moves - opp_moves
+    return -own_distance_from_center + opp_distance_from_center + own_moves - opp_moves
 
 
 def custom_score_2(game, player):
