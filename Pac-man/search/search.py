@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -87,7 +87,34 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    print "Start:", problem.getStartState()
+    print "Is the start a goal?", problem.isGoalState(problem.getStartState())
+    print "Start's successors:", problem.getSuccessors(problem.getStartState())
+
+    import random as rd
+
+    flag = True
+    return_list = []
+    state = problem.getStartState()
+
+    while flag:
+        if problem.isGoalState(state):
+            flag = False
+        else:
+            successor = rd.choice(problem.getSuccessors(state))
+            state = successor[0]
+            return_list.append(successor[1])
+
+    return return_list
+
+    # from game import Directions
+    #
+    # s = Directions.SOUTH
+    # w = Directions.WEST
+    # n = Directions.NORTH
+    # e = Directions.EAST
+    # return  [w, w, w, w, s, s, e, s, s, w, w]
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
