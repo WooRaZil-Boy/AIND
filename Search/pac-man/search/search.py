@@ -72,28 +72,6 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
-
-def graphSearch(problem, frontier):
-    frontier.push((problem.getStartState(), []))
-    explored = []
-
-    while True:
-        if frontier.isEmpty():
-            return False
-
-        state, paths = frontier.pop()
-
-        if problem.isGoalState(state):
-            return paths
-
-        if state not in explored:
-            explored.append(state)
-
-            for successor in problem.getSuccessors(state):
-                if successor[0] not in explored:
-                    next_paths = paths + [successor[1]]
-                    frontier.push((successor[0], next_paths))
-
 def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first.
@@ -110,24 +88,49 @@ def depthFirstSearch(problem):
     """
     "*** YOUR CODE HERE ***"
 
-    frontier = util.Stack()
-    return graphSearch(problem, frontier)
+    # print "Start:", problem.getStartState()
+    # print "Is the start a goal?", problem.isGoalState(problem.getStartState())
+    # print "Start's successors:", problem.getSuccessors(problem.getStartState())
 
+    import random as rd
+
+    frontier = []
+    explored = []
+    return_list = []
+    state = problem.getStartState()
+
+    while True:
+        if problem.isGoalState(state):
+            break
+        else:
+            explored.append(state)
+            successors = problem.getSuccessors(state)
+            print("-----")
+            print(successors)
+            print("-----")
+
+            for successor in successors:
+                if successor[0] is in explored:
+                    continue
+                else:
+                    frontier.append(successor)
+
+            successor = rd.choice(frontier)
+            state = successor[0]
+            return_list.append(successor[1])
+            frontier = []
+
+    return return_list
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-
-    frontier = util.PriorityQueueWithFunction(lambda (state, actions): len(actions))
-    return graphSearch(problem, frontier)
-
+    util.raiseNotDefined()
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-
-    frontier = util.PriorityQueueWithFunction(lambda (state, actions): problem.getCostOfActions(actions))
-    return graphSearch(problem, frontier)
+    util.raiseNotDefined()
 
 def nullHeuristic(state, problem=None):
     """
@@ -139,8 +142,7 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    frontier = util.PriorityQueueWithFunction(lambda (state, actions): problem.getCostOfActions(actions) + heuristic(state, problem))
-    return graphSearch(problem, frontier)
+    util.raiseNotDefined()
 
 
 # Abbreviations
