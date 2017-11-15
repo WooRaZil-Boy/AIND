@@ -76,8 +76,25 @@ class SelectorBIC(ModelSelector):
         """
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+        min_bic_score = float("inf")
+        best_model = None
+
         # TODO implement model selection based on BIC scores
-        raise NotImplementedError
+        for n in range(self.min_n_components, self.max_n_components + 1):
+
+            try:
+                p = n ** 2 + 2 * self.X.shape[1] * (n - 1)
+                model = GaussianHMM(n_components=n, covariance_type="diag", n_iter=1000,
+                                    random_state=self.random_state, verbose=False).fit(self.X, self.lengths)
+                log_l = model.score(self.X, self.lengths)
+                bic = -2 * log_l + p * np.log(self.X.shape[0])
+                if bic < min_bic_score:
+                    min_bic_score = bic
+                    best_model = self.base_model(n)
+            except:
+                continue
+
+        return best_model
 
 
 class SelectorDIC(ModelSelector):
@@ -94,7 +111,52 @@ class SelectorDIC(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection based on DIC scores
-        raise NotImplementedError
+        max_dic_score = float("-inf")
+        best_model = None
+
+        for n in range(self.min_n_components, self.max_n_components + 1):
+            anti_probabilities = []
+            try:
+                model = GaussianHMM(n_components=n, covariance_type="diag", n_iter=1000,
+                                    random_state=self.random_state, verbose=False)
+                model.fit(self.X, self.lengths)
+                log_l = model.score(self.X, self.lengths)
+            except:
+                continue
+            for word in self.words:
+                if word is not self.this_word:
+                    try:
+                        anti_model = GaussianHMM(n_components=n, covariance_type="diag", n_iter=1000,
+                                                 random_state=self.random_state, verbose=False)
+                        x, lengths = self.hwords[word]
+                        anti_model.fit(x, lengths)
+                        anti_probabilities.append(anti_model.score(x, lengths))
+                    except:
+                        continue
+
+            dic_score = log_l - np.mean(anti_probabilities)
+            if dic_score > max_dic_score:
+                max_dic_score = dic_score
+                best_model = self.base_model(n)
+
+        return best_model
+
+    def dic_score(self, c:int):
+        model = self.base_model(c)  # a GaussianHMM with n states
+        # score for the trained GaussianHMM with c components aka likelihood
+        # log(P(X(w))
+        log_l = model.score(self.X, self.lengths)
+        # accumulated other words aka anti-likelihood
+        # SUM(log(P(X(all -w))
+        anti_l = []
+        for word, (X, lengths) in self.hwords.items():
+            if word != self.this_word:
+                anti_l.append(model.score(X, lengths))
+
+        # log(P(X(w))) - 1/(M-1)*SUM(log(P(X(all -w))
+        score = log_l - np.average(anti_l)
+
+        return score, model
 
 
 class SelectorCV(ModelSelector):
@@ -106,4 +168,17 @@ class SelectorCV(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection using CV
-        raise NotImplementedError
+        try:
+            best_score = float("-inf")
+            best_model = None
+
+            for n in range(self.min_n_components, self.max_n_components + 1):
+                model = GaussianHMM(n_components=n, covariance_type="diag", n_iter=1000,
+                                        random_state=self.random_state, verbose=False).fit(self.X, self.lengths)
+                if self.verbose:
+                    print("model created for {} with {} states".format(self.this_word, num_states))
+                return model
+        except:
+            if self.verbose:
+                print("failure on {} with {} states".format(self.this_word, num_states))
+            return None
