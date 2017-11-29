@@ -83,11 +83,12 @@ class SelectorBIC(ModelSelector):
         for n in range(self.min_n_components, self.max_n_components + 1):
 
             try:
-                p = n ** 2 + 2 * self.X.shape[1] * (n - 1)
+                N, f = self.X.shape
+                p = n ** 2 + 2 * n * f - 1
                 model = GaussianHMM(n_components=n, covariance_type="diag", n_iter=1000,
                                     random_state=self.random_state, verbose=False).fit(self.X, self.lengths)
                 log_l = model.score(self.X, self.lengths)
-                bic = -2 * log_l + p * np.log(self.X.shape[0])
+                bic = -2 * log_l + p * np.log(N)
                 if bic < min_bic_score:
                     min_bic_score = bic
                     best_model = self.base_model(n)
@@ -118,8 +119,7 @@ class SelectorDIC(ModelSelector):
             anti_probabilities = []
             try:
                 model = GaussianHMM(n_components=n, covariance_type="diag", n_iter=1000,
-                                    random_state=self.random_state, verbose=False)
-                model.fit(self.X, self.lengths)
+                                    random_state=self.random_state, verbose=False).fit(self.X, self.lengths)
                 log_l = model.score(self.X, self.lengths)
             except:
                 continue
@@ -167,18 +167,39 @@ class SelectorCV(ModelSelector):
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+        log_LHoods = []
+        best_score_cv = None
+        score_cv_avg = None
+        best_model = None
+
         # TODO implement model selection using CV
         try:
-            best_score = float("-inf")
-            best_model = None
+            for n in range(self.min_n_components, self.max_n_components +1):
+                if len(self.sequences) > 2:
+                    split_method = KFold();
+                    for train_idx, test_idx in split_method.split(self.sequences):
+                        #Train
+                        self.X, self.lengths = combine_sequences(train_idx, self.sequences)
+                        #Test
+                        X_test, length_test = combine_sequences(test_idx, self.sequences)
 
-            for n in range(self.min_n_components, self.max_n_components + 1):
-                model = GaussianHMM(n_components=n, covariance_type="diag", n_iter=1000,
-                                        random_state=self.random_state, verbose=False).fit(self.X, self.lengths)
-                if self.verbose:
-                    print("model created for {} with {} states".format(self.this_word, num_states))
-                return model
-        except:
-            if self.verbose:
-                print("failure on {} with {} states".format(self.this_word, num_states))
-            return None
+                        hmm_model = self.base_model(n)
+                        log_current_LHood = hmm_model.score(X_test, length_test)
+                else:
+                    hmm_model = self.base_model(n)
+                    log_current_LHood = hmm_model.score(self.X, self.lengths)
+
+                log_LHoods.append(log_current_LHood)
+                score_cv_avg = np.mean(log_LHoods)
+
+                if best_score_cv is not None and score_cv_avg > best_score_cv:
+                    best_score_cv = score_cv_avg
+                    best_model = hmm_model
+
+                if best_model is None:
+                    best_model = hmm_model
+
+        except Exception as e:
+            pass
+
+        return best_model
