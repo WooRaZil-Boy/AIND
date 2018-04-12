@@ -11886,14 +11886,14 @@ device_type: &#34;CPU&#34;
 memory_limit: 268435456
 locality {
 }
-incarnation: 17055324877929896780
+incarnation: 10000169308355027211
 , name: &#34;/gpu:0&#34;
 device_type: &#34;GPU&#34;
 memory_limit: 357171200
 locality {
   bus_id: 1
 }
-incarnation: 9759331588844439459
+incarnation: 13451032382897085998
 physical_device_desc: &#34;device: 0, name: Tesla K80, pci bus id: 0000:00:04.0&#34;
 ]
 </pre>
@@ -12378,7 +12378,7 @@ A basic RNN model is a good baseline for sequence data.  In this model, you'll b
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">simple_model</span><span class="p">(</span><span class="n">input_shape</span><span class="p">,</span> <span class="n">output_sequence_length</span><span class="p">,</span> <span class="n">english_vocab_size</span><span class="p">,</span> <span class="n">french_vocab_size</span><span class="p">):</span>
@@ -12399,11 +12399,20 @@ A basic RNN model is a good baseline for sequence data.  In this model, you'll b
     <span class="nb">print</span><span class="p">(</span><span class="n">french_vocab_size</span><span class="p">)</span>
 
     <span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
-        <span class="n">LSTM</span><span class="p">(</span><span class="n">output_sequence_length</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">return_sequences</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+<span class="c1">#         LSTM(output_sequence_length, input_shape=input_shape[1:], return_sequences=True),</span>
         <span class="c1">#french_vocab_size이 unit이 된다(출력). </span>
         <span class="c1">#input_shape는 (137861, 21, 1). input_shape[1:]을 해야 (21, 1)이 된다.</span>
-        <span class="c1">#return_sequences 마지막 출력 반환 여부</span>
-        <span class="n">Dense</span><span class="p">(</span><span class="n">french_vocab_size</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;softmax&quot;</span><span class="p">)</span> <span class="c1">#FC 연결. 활성화 함수 softmax.</span>
+        <span class="c1">#return_sequences True로 하면 출력 순서열의 마지막 값만 출력하는 것(False)이 </span>
+        <span class="c1">#아니라 전체 순서열을 3차원 텐서 형태로 출력한다.</span>
+        <span class="n">GRU</span><span class="p">(</span><span class="n">output_sequence_length</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">return_sequences</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="c1">#GRU는 LSTM을 개선한 모델.</span>
+        <span class="c1">#GRU는 파라미터 수가 적어 학습 시간이 짧고, 적은 데이터로도 학습이 가능하다.</span>
+        <span class="c1">#반대로 충분한 데이터와 시간이 있을 경우 LSTM가 더 좋은 결과를 낼 수도 있다.</span>
+        <span class="c1">#https://keras.io/layers/recurrent/#gru</span>
+        <span class="n">TimeDistributed</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="n">french_vocab_size</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;softmax&quot;</span><span class="p">))</span> <span class="c1">#FC 연결. 활성화 함수 softmax.</span>
+        <span class="c1">#위에서 return_sequences를 True로 하면, 3차원 텐서로 출력된다.</span>
+        <span class="c1">#이후 TimeDistributed 래퍼를 사용하여 3차원 텐서가 input이 되도록 확장할 수 있다.</span>
+        <span class="c1">#https://keras.io/layers/wrappers/#TimeDistributed</span>
     <span class="p">])</span>
     
     <span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
@@ -12451,12 +12460,12 @@ A basic RNN model is a good baseline for sequence data.  In this model, you'll b
 _________________________________________________________________
 Layer (type)                 Output Shape              Param #   
 =================================================================
-lstm_1 (LSTM)                (None, 21, 21)            1932      
+gru_18 (GRU)                 (None, 21, 21)            1449      
 _________________________________________________________________
-dense_1 (Dense)              (None, 21, 344)           7568      
+time_distributed_1 (TimeDist (None, 21, 344)           7568      
 =================================================================
-Total params: 9,500
-Trainable params: 9,500
+Total params: 9,017
+Trainable params: 9,017
 Non-trainable params: 0
 _________________________________________________________________
 (137861, 21, 1)
@@ -12466,36 +12475,36 @@ _________________________________________________________________
 _________________________________________________________________
 Layer (type)                 Output Shape              Param #   
 =================================================================
-lstm_2 (LSTM)                (None, 21, 21)            1932      
+gru_19 (GRU)                 (None, 21, 21)            1449      
 _________________________________________________________________
-dense_2 (Dense)              (None, 21, 344)           7568      
+time_distributed_2 (TimeDist (None, 21, 344)           7568      
 =================================================================
-Total params: 9,500
-Trainable params: 9,500
+Total params: 9,017
+Trainable params: 9,017
 Non-trainable params: 0
 _________________________________________________________________
 Train on 110288 samples, validate on 27573 samples
 Epoch 1/10
-110288/110288 [==============================] - 8s 74us/step - loss: 4.8376 - acc: 0.3567 - val_loss: nan - val_acc: 0.4256
+110288/110288 [==============================] - 7s 66us/step - loss: 4.6504 - acc: 0.3931 - val_loss: nan - val_acc: 0.4093
 Epoch 2/10
-110288/110288 [==============================] - 7s 68us/step - loss: 2.8606 - acc: 0.4266 - val_loss: nan - val_acc: 0.4336
+110288/110288 [==============================] - 6s 54us/step - loss: 3.0206 - acc: 0.4082 - val_loss: nan - val_acc: 0.4093
 Epoch 3/10
-110288/110288 [==============================] - 7s 68us/step - loss: 2.6019 - acc: 0.4467 - val_loss: nan - val_acc: 0.4595
+110288/110288 [==============================] - 6s 54us/step - loss: 2.7814 - acc: 0.4085 - val_loss: nan - val_acc: 0.4107
 Epoch 4/10
-110288/110288 [==============================] - 7s 68us/step - loss: 2.4803 - acc: 0.4682 - val_loss: nan - val_acc: 0.4729
+110288/110288 [==============================] - 6s 54us/step - loss: 2.6653 - acc: 0.4170 - val_loss: nan - val_acc: 0.4291
 Epoch 5/10
-110288/110288 [==============================] - 7s 68us/step - loss: 2.3791 - acc: 0.4750 - val_loss: nan - val_acc: 0.4811
+110288/110288 [==============================] - 6s 54us/step - loss: 2.5880 - acc: 0.4507 - val_loss: nan - val_acc: 0.4625
 Epoch 6/10
-110288/110288 [==============================] - 7s 68us/step - loss: 2.2905 - acc: 0.4834 - val_loss: nan - val_acc: 0.4867
+110288/110288 [==============================] - 6s 54us/step - loss: 2.5298 - acc: 0.4669 - val_loss: nan - val_acc: 0.4760
 Epoch 7/10
-110288/110288 [==============================] - 7s 68us/step - loss: 2.2068 - acc: 0.4926 - val_loss: nan - val_acc: 0.5033
+110288/110288 [==============================] - 6s 54us/step - loss: 2.4713 - acc: 0.4814 - val_loss: nan - val_acc: 0.4883
 Epoch 8/10
-110288/110288 [==============================] - 8s 68us/step - loss: 2.1311 - acc: 0.5044 - val_loss: nan - val_acc: 0.5040
+110288/110288 [==============================] - 6s 54us/step - loss: 2.4118 - acc: 0.4873 - val_loss: nan - val_acc: 0.4884
 Epoch 9/10
-110288/110288 [==============================] - 8s 68us/step - loss: 2.0620 - acc: 0.5158 - val_loss: nan - val_acc: 0.5208
+110288/110288 [==============================] - 6s 54us/step - loss: 2.3558 - acc: 0.4898 - val_loss: nan - val_acc: 0.4967
 Epoch 10/10
-110288/110288 [==============================] - 7s 68us/step - loss: 1.9992 - acc: 0.5331 - val_loss: nan - val_acc: 0.5420
-new jersey est est parfois est en mais il est en en en &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt;
+110288/110288 [==============================] - 6s 54us/step - loss: 2.3067 - acc: 0.4969 - val_loss: nan - val_acc: 0.5035
+new la est est est est est est est est est est est &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt;
 </pre>
 </div>
 </div>
@@ -12517,7 +12526,7 @@ You've turned the words into ids, but there's a better representation of a word.
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">embed_model</span><span class="p">(</span><span class="n">input_shape</span><span class="p">,</span> <span class="n">output_sequence_length</span><span class="p">,</span> <span class="n">english_vocab_size</span><span class="p">,</span> <span class="n">french_vocab_size</span><span class="p">):</span>
@@ -12544,8 +12553,9 @@ You've turned the words into ids, but there's a better representation of a word.
         <span class="n">Embedding</span><span class="p">(</span><span class="n">english_vocab_size</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="n">input_length</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span>
         <span class="c1">#https://keras.io/layers/embeddings/</span>
         <span class="c1">#임베딩 후 LSTM 생성</span>
-        <span class="n">LSTM</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="n">return_sequences</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="c1">#LSTM 모델</span>
-        <span class="n">Dense</span><span class="p">(</span><span class="n">french_vocab_size</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;softmax&quot;</span><span class="p">)</span> <span class="c1">#FC 연결. 활성화 함수 softmax.</span>
+<span class="c1">#         LSTM(64, return_sequences=True), #LSTM 모델</span>
+        <span class="n">GRU</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="n">return_sequences</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="c1">#GRU 모델</span>
+        <span class="n">TimeDistributed</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="n">french_vocab_size</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;softmax&quot;</span><span class="p">))</span> <span class="c1">#FC 연결. 활성화 함수 softmax.</span>
     <span class="p">])</span>
     
     <span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
@@ -12596,14 +12606,14 @@ You've turned the words into ids, but there's a better representation of a word.
 _________________________________________________________________
 Layer (type)                 Output Shape              Param #   
 =================================================================
-embedding_1 (Embedding)      (None, 21, 64)            12736     
+embedding_6 (Embedding)      (None, 21, 64)            12736     
 _________________________________________________________________
-lstm_3 (LSTM)                (None, 21, 64)            33024     
+gru_20 (GRU)                 (None, 21, 64)            24768     
 _________________________________________________________________
-dense_3 (Dense)              (None, 21, 344)           22360     
+time_distributed_3 (TimeDist (None, 21, 344)           22360     
 =================================================================
-Total params: 68,120
-Trainable params: 68,120
+Total params: 59,864
+Trainable params: 59,864
 Non-trainable params: 0
 _________________________________________________________________
 (137861, 21)
@@ -12613,38 +12623,38 @@ _________________________________________________________________
 _________________________________________________________________
 Layer (type)                 Output Shape              Param #   
 =================================================================
-embedding_2 (Embedding)      (None, 21, 64)            12736     
+embedding_7 (Embedding)      (None, 21, 64)            12736     
 _________________________________________________________________
-lstm_4 (LSTM)                (None, 21, 64)            33024     
+gru_21 (GRU)                 (None, 21, 64)            24768     
 _________________________________________________________________
-dense_4 (Dense)              (None, 21, 344)           22360     
+time_distributed_4 (TimeDist (None, 21, 344)           22360     
 =================================================================
-Total params: 68,120
-Trainable params: 68,120
+Total params: 59,864
+Trainable params: 59,864
 Non-trainable params: 0
 _________________________________________________________________
 Train on 110288 samples, validate on 27573 samples
 Epoch 1/10
-110288/110288 [==============================] - 9s 86us/step - loss: 3.7726 - acc: 0.3995 - val_loss: nan - val_acc: 0.4093
+110288/110288 [==============================] - 9s 77us/step - loss: 3.8429 - acc: 0.3939 - val_loss: nan - val_acc: 0.4093
 Epoch 2/10
-110288/110288 [==============================] - 9s 81us/step - loss: 2.7388 - acc: 0.4354 - val_loss: nan - val_acc: 0.4776
+110288/110288 [==============================] - 7s 65us/step - loss: 2.6962 - acc: 0.4421 - val_loss: nan - val_acc: 0.5123
 Epoch 3/10
-110288/110288 [==============================] - 9s 82us/step - loss: 2.3179 - acc: 0.4982 - val_loss: nan - val_acc: 0.5232
+110288/110288 [==============================] - 7s 65us/step - loss: 1.9238 - acc: 0.5642 - val_loss: nan - val_acc: 0.6138
 Epoch 4/10
-110288/110288 [==============================] - 9s 82us/step - loss: 1.8705 - acc: 0.5590 - val_loss: nan - val_acc: 0.6032
+110288/110288 [==============================] - 7s 65us/step - loss: 1.4042 - acc: 0.6628 - val_loss: nan - val_acc: 0.7043
 Epoch 5/10
-110288/110288 [==============================] - 9s 82us/step - loss: 1.5687 - acc: 0.6216 - val_loss: nan - val_acc: 0.6426
+110288/110288 [==============================] - 7s 65us/step - loss: 1.1279 - acc: 0.7295 - val_loss: nan - val_acc: 0.7504
 Epoch 6/10
-110288/110288 [==============================] - 9s 82us/step - loss: 1.3292 - acc: 0.6674 - val_loss: nan - val_acc: 0.6964
+110288/110288 [==============================] - 7s 65us/step - loss: 0.9498 - acc: 0.7636 - val_loss: nan - val_acc: 0.7759
 Epoch 7/10
-110288/110288 [==============================] - 9s 82us/step - loss: 1.1324 - acc: 0.7175 - val_loss: nan - val_acc: 0.7399
+110288/110288 [==============================] - 7s 65us/step - loss: 0.8175 - acc: 0.7856 - val_loss: nan - val_acc: 0.8001
 Epoch 8/10
-110288/110288 [==============================] - 9s 82us/step - loss: 0.9681 - acc: 0.7560 - val_loss: nan - val_acc: 0.7739
+110288/110288 [==============================] - 7s 65us/step - loss: 0.7192 - acc: 0.8081 - val_loss: nan - val_acc: 0.8178
 Epoch 9/10
-110288/110288 [==============================] - 9s 82us/step - loss: 0.8396 - acc: 0.7838 - val_loss: nan - val_acc: 0.7937
+110288/110288 [==============================] - 7s 65us/step - loss: 0.6463 - acc: 0.8233 - val_loss: nan - val_acc: 0.8295
 Epoch 10/10
-110288/110288 [==============================] - 9s 81us/step - loss: 0.7427 - acc: 0.8014 - val_loss: nan - val_acc: 0.8083
-new jersey est parfois calme en l&#39; et il est de en en avril &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt;
+110288/110288 [==============================] - 7s 65us/step - loss: 0.5921 - acc: 0.8341 - val_loss: nan - val_acc: 0.8398
+new jersey est parfois calme en l&#39; et il il est en en avril &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt;
 </pre>
 </div>
 </div>
@@ -12665,7 +12675,7 @@ One restriction of a RNN is that it can't see the future input, only the past.  
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">bd_model</span><span class="p">(</span><span class="n">input_shape</span><span class="p">,</span> <span class="n">output_sequence_length</span><span class="p">,</span> <span class="n">english_vocab_size</span><span class="p">,</span> <span class="n">french_vocab_size</span><span class="p">):</span>
@@ -12690,12 +12700,13 @@ One restriction of a RNN is that it can't see the future input, only the past.  
     
     <span class="c1"># TODO: Implement</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
-        <span class="n">Bidirectional</span><span class="p">(</span><span class="n">LSTM</span><span class="p">(</span><span class="n">output_sequence_length</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">return_sequences</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span>
+<span class="c1">#         Bidirectional(LSTM(output_sequence_length, input_shape=input_shape[1:], return_sequences=True), input_shape=input_shape[1:]),</span>
         <span class="c1">#Bidirectional으로 RNN을 wrapping하는 클래스 #simple_model에서 사용한 LSTM과 동일</span>
         <span class="c1">#https://keras.io/layers/wrappers/#bidirectional</span>
-        <span class="n">LSTM</span><span class="p">(</span><span class="n">output_sequence_length</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">return_sequences</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">Bidirectional</span><span class="p">(</span><span class="n">GRU</span><span class="p">(</span><span class="n">output_sequence_length</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">return_sequences</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span>
+<span class="c1">#         LSTM(output_sequence_length, input_shape=input_shape[1:], return_sequences=True),</span>
         <span class="c1">#simple_model에서 사용한 LSTM과 동일</span>
-        <span class="n">Dense</span><span class="p">(</span><span class="n">french_vocab_size</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;softmax&quot;</span><span class="p">)</span> <span class="c1">#FC 연결. 활성화 함수 softmax.</span>
+        <span class="n">TimeDistributed</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="n">french_vocab_size</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;softmax&quot;</span><span class="p">))</span> <span class="c1">#FC 연결. 활성화 함수 softmax.</span>
     <span class="p">])</span>
     
     <span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
@@ -12747,14 +12758,12 @@ One restriction of a RNN is that it can't see the future input, only the past.  
 _________________________________________________________________
 Layer (type)                 Output Shape              Param #   
 =================================================================
-bidirectional_1 (Bidirection (None, 21, 42)            3864      
+bidirectional_9 (Bidirection (None, 21, 42)            2898      
 _________________________________________________________________
-lstm_6 (LSTM)                (None, 21, 21)            5376      
-_________________________________________________________________
-dense_5 (Dense)              (None, 21, 344)           7568      
+time_distributed_5 (TimeDist (None, 21, 344)           14792     
 =================================================================
-Total params: 16,808
-Trainable params: 16,808
+Total params: 17,690
+Trainable params: 17,690
 Non-trainable params: 0
 _________________________________________________________________
 (137861, 21, 1)
@@ -12764,38 +12773,36 @@ _________________________________________________________________
 _________________________________________________________________
 Layer (type)                 Output Shape              Param #   
 =================================================================
-bidirectional_2 (Bidirection (None, 21, 42)            3864      
+bidirectional_10 (Bidirectio (None, 21, 42)            2898      
 _________________________________________________________________
-lstm_8 (LSTM)                (None, 21, 21)            5376      
-_________________________________________________________________
-dense_6 (Dense)              (None, 21, 344)           7568      
+time_distributed_6 (TimeDist (None, 21, 344)           14792     
 =================================================================
-Total params: 16,808
-Trainable params: 16,808
+Total params: 17,690
+Trainable params: 17,690
 Non-trainable params: 0
 _________________________________________________________________
 Train on 110288 samples, validate on 27573 samples
 Epoch 1/10
- - 17s - loss: 4.4410 - acc: 0.4049 - val_loss: nan - val_acc: 0.4761
+ - 10s - loss: 4.3156 - acc: 0.4308 - val_loss: nan - val_acc: 0.4725
 Epoch 2/10
- - 16s - loss: 2.7831 - acc: 0.4748 - val_loss: nan - val_acc: 0.4754
+ - 9s - loss: 2.6003 - acc: 0.4802 - val_loss: nan - val_acc: 0.4908
 Epoch 3/10
- - 16s - loss: 2.5392 - acc: 0.4816 - val_loss: nan - val_acc: 0.4879
+ - 9s - loss: 2.3468 - acc: 0.4926 - val_loss: nan - val_acc: 0.4985
 Epoch 4/10
- - 16s - loss: 2.3809 - acc: 0.4894 - val_loss: nan - val_acc: 0.4941
+ - 9s - loss: 2.1429 - acc: 0.5163 - val_loss: nan - val_acc: 0.5384
 Epoch 5/10
- - 16s - loss: 2.2324 - acc: 0.5009 - val_loss: nan - val_acc: 0.5057
+ - 9s - loss: 1.9712 - acc: 0.5431 - val_loss: nan - val_acc: 0.5548
 Epoch 6/10
- - 16s - loss: 2.0933 - acc: 0.5086 - val_loss: nan - val_acc: 0.5190
+ - 9s - loss: 1.8354 - acc: 0.5675 - val_loss: nan - val_acc: 0.5777
 Epoch 7/10
- - 16s - loss: 1.9940 - acc: 0.5218 - val_loss: nan - val_acc: 0.5241
+ - 9s - loss: 1.7312 - acc: 0.5800 - val_loss: nan - val_acc: 0.5856
 Epoch 8/10
- - 16s - loss: 1.9100 - acc: 0.5316 - val_loss: nan - val_acc: 0.5414
+ - 9s - loss: 1.6557 - acc: 0.5902 - val_loss: nan - val_acc: 0.5968
 Epoch 9/10
- - 16s - loss: 1.8373 - acc: 0.5475 - val_loss: nan - val_acc: 0.5540
+ - 9s - loss: 1.5996 - acc: 0.5979 - val_loss: nan - val_acc: 0.5981
 Epoch 10/10
- - 16s - loss: 1.7693 - acc: 0.5564 - val_loss: nan - val_acc: 0.5602
-la jersey est est parfois est en il il il en en en &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt;
+ - 9s - loss: 1.5576 - acc: 0.6012 - val_loss: nan - val_acc: 0.6048
+new jersey est est est en en et il est est en en &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt;
 </pre>
 </div>
 </div>
@@ -12816,7 +12823,7 @@ la jersey est est parfois est en il il il en en en &lt;PAD&gt; &lt;PAD&gt; &lt;P
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">encdec_model</span><span class="p">(</span><span class="n">input_shape</span><span class="p">,</span> <span class="n">output_sequence_length</span><span class="p">,</span> <span class="n">english_vocab_size</span><span class="p">,</span> <span class="n">french_vocab_size</span><span class="p">):</span>
@@ -12831,15 +12838,130 @@ la jersey est est parfois est en il il il en en en &lt;PAD&gt; &lt;PAD&gt; &lt;P
     
     <span class="c1">#인코더로 문장의 행렬 표현을 만들고, 디코더는 행렬을 출력으로 변환한다.</span>
     
+    <span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.001</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">output_sequence_length</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">english_vocab_size</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">french_vocab_size</span><span class="p">)</span>
+    
     <span class="c1"># OPTIONAL: Implement</span>
-    <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>
+        <span class="n">GRU</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">go_backwards</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="c1">#인코더</span>
+        <span class="c1">#정확도 향상 위해 입력 순서 바꿔준다.</span>
+        <span class="n">RepeatVector</span><span class="p">(</span><span class="n">output_sequence_length</span><span class="p">),</span>
+        <span class="c1">#https://discussions.udacity.com/t/capstone-project-model-final-assertion-error/304642/5</span>
+        <span class="c1">#https://groups.google.com/forum/#!topic/keras-users/xxskWHMe_ro</span>
+        <span class="n">GRU</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="n">return_sequences</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="c1">#디코더</span>
+        <span class="n">TimeDistributed</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="n">french_vocab_size</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;softmax&#39;</span><span class="p">))</span>
+    <span class="p">])</span>
+    
+    <span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+    
+    <span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="n">sparse_categorical_crossentropy</span><span class="p">,</span> <span class="c1">#손실함수.</span>
+                  <span class="n">optimizer</span><span class="o">=</span><span class="n">Adam</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">),</span> <span class="c1">#최적화</span>
+                  <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span> <span class="c1">#정확도를 우선하여 학습</span>
+    
+    <span class="k">return</span> <span class="n">model</span>
+
 <span class="n">tests</span><span class="o">.</span><span class="n">test_encdec_model</span><span class="p">(</span><span class="n">encdec_model</span><span class="p">)</span>
 
-
 <span class="c1"># OPTIONAL: Train and Print prediction(s)</span>
+
+<span class="n">tmp_x</span> <span class="o">=</span> <span class="n">pad</span><span class="p">(</span><span class="n">preproc_english_sentences</span><span class="p">,</span> <span class="n">max_french_sequence_length</span><span class="p">)</span>
+<span class="n">tmp_x</span> <span class="o">=</span> <span class="n">tmp_x</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">preproc_french_sentences</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="mi">1</span><span class="p">))</span>
+
+<span class="c1"># Train the neural network</span>
+<span class="n">encoded_rnn_model</span> <span class="o">=</span> <span class="n">encdec_model</span><span class="p">(</span>
+    <span class="n">tmp_x</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+    <span class="n">max_french_sequence_length</span><span class="p">,</span>
+    <span class="n">english_vocab_size</span><span class="p">,</span>
+    <span class="n">french_vocab_size</span><span class="p">)</span>
+<span class="n">encoded_rnn_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">tmp_x</span><span class="p">,</span> <span class="n">preproc_french_sentences</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">validation_split</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="c1">#Bidirectional으로 래핑한 것만 빼면 simple_model과 거의 유사.</span>
+
+<span class="c1"># Print prediction(s)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">logits_to_text</span><span class="p">(</span><span class="n">encoded_rnn_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">tmp_x</span><span class="p">[:</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">],</span> <span class="n">french_tokenizer</span><span class="p">))</span>
 </pre></div>
 
 </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+<div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>(137861, 15, 1)
+21
+199
+344
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+gru_32 (GRU)                 (None, 128)               49920     
+_________________________________________________________________
+repeat_vector_8 (RepeatVecto (None, 21, 128)           0         
+_________________________________________________________________
+gru_33 (GRU)                 (None, 21, 128)           98688     
+_________________________________________________________________
+time_distributed_15 (TimeDis (None, 21, 344)           44376     
+=================================================================
+Total params: 192,984
+Trainable params: 192,984
+Non-trainable params: 0
+_________________________________________________________________
+(137861, 21, 1)
+21
+199
+344
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+gru_34 (GRU)                 (None, 128)               49920     
+_________________________________________________________________
+repeat_vector_9 (RepeatVecto (None, 21, 128)           0         
+_________________________________________________________________
+gru_35 (GRU)                 (None, 21, 128)           98688     
+_________________________________________________________________
+time_distributed_16 (TimeDis (None, 21, 344)           44376     
+=================================================================
+Total params: 192,984
+Trainable params: 192,984
+Non-trainable params: 0
+_________________________________________________________________
+Train on 110288 samples, validate on 27573 samples
+Epoch 1/10
+ - 14s - loss: 2.9270 - acc: 0.4387 - val_loss: nan - val_acc: 0.4797
+Epoch 2/10
+ - 12s - loss: 2.1889 - acc: 0.4923 - val_loss: nan - val_acc: 0.5039
+Epoch 3/10
+ - 12s - loss: 1.9885 - acc: 0.5163 - val_loss: nan - val_acc: 0.5220
+Epoch 4/10
+ - 12s - loss: 1.8358 - acc: 0.5477 - val_loss: nan - val_acc: 0.5702
+Epoch 5/10
+ - 12s - loss: 1.6734 - acc: 0.5806 - val_loss: nan - val_acc: 0.5893
+Epoch 6/10
+ - 12s - loss: 1.5676 - acc: 0.5917 - val_loss: nan - val_acc: 0.5994
+Epoch 7/10
+ - 12s - loss: 1.4903 - acc: 0.6022 - val_loss: nan - val_acc: 0.6041
+Epoch 8/10
+ - 12s - loss: 1.4335 - acc: 0.6086 - val_loss: nan - val_acc: 0.6153
+Epoch 9/10
+ - 12s - loss: 1.3750 - acc: 0.6206 - val_loss: nan - val_acc: 0.6275
+Epoch 10/10
+ - 12s - loss: 1.3206 - acc: 0.6353 - val_loss: nan - val_acc: 0.6423
+new jersey est jamais chaud en mois et il est est en en &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt;
+</pre>
+</div>
+</div>
+
 </div>
 </div>
 
@@ -12855,7 +12977,7 @@ la jersey est est parfois est en il il il en en en &lt;PAD&gt; &lt;PAD&gt; &lt;P
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="prompt input_prompt">In&nbsp;[28]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">model_final</span><span class="p">(</span><span class="n">input_shape</span><span class="p">,</span> <span class="n">output_sequence_length</span><span class="p">,</span> <span class="n">english_vocab_size</span><span class="p">,</span> <span class="n">french_vocab_size</span><span class="p">,</span> <span class="n">dropout_rate</span><span class="o">=</span><span class="mf">0.2</span><span class="p">):</span>
@@ -12868,8 +12990,7 @@ la jersey est est parfois est en il il il en en en &lt;PAD&gt; &lt;PAD&gt; &lt;P
 <span class="sd">    :return: Keras model built, but not trained</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># TODO: Implement</span>
-    <span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.001</span>
-    <span class="n">dropout_rate</span> <span class="o">=</span> <span class="n">dropout_rate</span>
+    <span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.005</span>
     
     <span class="nb">print</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">output_sequence_length</span><span class="p">)</span>
@@ -12877,21 +12998,14 @@ la jersey est est parfois est en il il il en en en &lt;PAD&gt; &lt;PAD&gt; &lt;P
     <span class="nb">print</span><span class="p">(</span><span class="n">french_vocab_size</span><span class="p">)</span>
     
     <span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">([</span>        
-        <span class="n">Embedding</span><span class="p">(</span><span class="n">english_vocab_size</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="n">input_length</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span>
-        <span class="c1">#https://keras.io/layers/embeddings/</span>
-        <span class="n">Bidirectional</span><span class="p">(</span><span class="n">LSTM</span><span class="p">(</span><span class="n">output_sequence_length</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">return_sequences</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span>
-        <span class="c1">#Bidirectional으로 RNN을 wrapping하는 클래스 #simple_model에서 사용한 LSTM과 동일</span>
-        <span class="c1">#https://keras.io/layers/wrappers/#bidirectional</span>
+        <span class="n">Embedding</span><span class="p">(</span><span class="n">english_vocab_size</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="n">input_length</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span> <span class="c1">#임베딩</span>
+        <span class="n">Bidirectional</span><span class="p">(</span><span class="n">GRU</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">return_sequences</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span> <span class="c1">#인코더</span>
+        <span class="c1">#단순히 Bidirectional(GRU(128))로 해도 된다.</span>
         <span class="n">RepeatVector</span><span class="p">(</span><span class="n">output_sequence_length</span><span class="p">),</span>
-        <span class="c1">#https://discussions.udacity.com/t/capstone-project-model-final-assertion-error/304642/5</span>
-        <span class="n">Bidirectional</span><span class="p">(</span><span class="n">LSTM</span><span class="p">(</span><span class="n">output_sequence_length</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">return_sequences</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span>
-        <span class="n">LSTM</span><span class="p">(</span><span class="n">output_sequence_length</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">return_sequences</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-        <span class="c1">#simple_model에서 사용한 LSTM과 동일</span>
-        <span class="n">Dense</span><span class="p">(</span><span class="n">french_vocab_size</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">),</span> <span class="c1">#FC연결. 활성화 함수 softmax.</span>
-        <span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_rate</span><span class="p">),</span>
-        <span class="n">Dense</span><span class="p">(</span><span class="n">french_vocab_size</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">),</span>
+        <span class="n">Bidirectional</span><span class="p">(</span><span class="n">GRU</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">return_sequences</span><span class="o">=</span><span class="kc">True</span><span class="p">)),</span> <span class="c1">#디코더</span>
+        <span class="n">TimeDistributed</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="n">french_vocab_size</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">)),</span> <span class="c1">#FC연결. 활성화 함수 relu.</span>
         <span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_rate</span><span class="p">),</span> <span class="c1">#드랍아웃</span>
-        <span class="n">Dense</span><span class="p">(</span><span class="n">french_vocab_size</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;softmax&quot;</span><span class="p">)</span> <span class="c1">#FC 연결. 활성화 함수 softmax.</span>
+        <span class="n">TimeDistributed</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="n">french_vocab_size</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;softmax&quot;</span><span class="p">))</span> <span class="c1">#FC 연결. 활성화 함수 softmax.</span>
     <span class="p">])</span>
     
     <span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
@@ -12945,28 +13059,22 @@ la jersey est est parfois est en il il il en en en &lt;PAD&gt; &lt;PAD&gt; &lt;P
 _________________________________________________________________
 Layer (type)                 Output Shape              Param #   
 =================================================================
-embedding_5 (Embedding)      (None, 15, 64)            12736     
+embedding_16 (Embedding)     (None, 15, 128)           25472     
 _________________________________________________________________
-bidirectional_7 (Bidirection (None, 42)                14448     
+bidirectional_23 (Bidirectio (None, 256)               197376    
 _________________________________________________________________
-repeat_vector_3 (RepeatVecto (None, 21, 42)            0         
+repeat_vector_16 (RepeatVect (None, 21, 256)           0         
 _________________________________________________________________
-bidirectional_8 (Bidirection (None, 21, 42)            10752     
+bidirectional_24 (Bidirectio (None, 21, 256)           295680    
 _________________________________________________________________
-lstm_17 (LSTM)               (None, 21, 21)            5376      
+time_distributed_33 (TimeDis (None, 21, 344)           88408     
 _________________________________________________________________
-dense_13 (Dense)             (None, 21, 344)           7568      
+dropout_21 (Dropout)         (None, 21, 344)           0         
 _________________________________________________________________
-dropout_5 (Dropout)          (None, 21, 344)           0         
-_________________________________________________________________
-dense_14 (Dense)             (None, 21, 688)           237360    
-_________________________________________________________________
-dropout_6 (Dropout)          (None, 21, 688)           0         
-_________________________________________________________________
-dense_15 (Dense)             (None, 21, 344)           237016    
+time_distributed_34 (TimeDis (None, 21, 344)           118680    
 =================================================================
-Total params: 525,256
-Trainable params: 525,256
+Total params: 725,616
+Trainable params: 725,616
 Non-trainable params: 0
 _________________________________________________________________
 Final Model Loaded
@@ -12977,52 +13085,46 @@ Final Model Loaded
 _________________________________________________________________
 Layer (type)                 Output Shape              Param #   
 =================================================================
-embedding_6 (Embedding)      (None, 21, 64)            12736     
+embedding_17 (Embedding)     (None, 21, 128)           25472     
 _________________________________________________________________
-bidirectional_9 (Bidirection (None, 42)                14448     
+bidirectional_25 (Bidirectio (None, 256)               197376    
 _________________________________________________________________
-repeat_vector_4 (RepeatVecto (None, 21, 42)            0         
+repeat_vector_17 (RepeatVect (None, 21, 256)           0         
 _________________________________________________________________
-bidirectional_10 (Bidirectio (None, 21, 42)            10752     
+bidirectional_26 (Bidirectio (None, 21, 256)           295680    
 _________________________________________________________________
-lstm_20 (LSTM)               (None, 21, 21)            5376      
+time_distributed_35 (TimeDis (None, 21, 344)           88408     
 _________________________________________________________________
-dense_16 (Dense)             (None, 21, 344)           7568      
+dropout_22 (Dropout)         (None, 21, 344)           0         
 _________________________________________________________________
-dropout_7 (Dropout)          (None, 21, 344)           0         
-_________________________________________________________________
-dense_17 (Dense)             (None, 21, 688)           237360    
-_________________________________________________________________
-dropout_8 (Dropout)          (None, 21, 688)           0         
-_________________________________________________________________
-dense_18 (Dense)             (None, 21, 344)           237016    
+time_distributed_36 (TimeDis (None, 21, 344)           118680    
 =================================================================
-Total params: 525,256
-Trainable params: 525,256
+Total params: 725,616
+Trainable params: 725,616
 Non-trainable params: 0
 _________________________________________________________________
 Train on 110288 samples, validate on 27573 samples
 Epoch 1/10
-110288/110288 [==============================] - 37s 334us/step - loss: 3.1689 - acc: 0.4294 - val_loss: nan - val_acc: 0.4877
+110288/110288 [==============================] - 31s 282us/step - loss: 2.2943 - acc: 0.4987 - val_loss: nan - val_acc: 0.6235
 Epoch 2/10
-110288/110288 [==============================] - 34s 307us/step - loss: 2.0044 - acc: 0.5363 - val_loss: nan - val_acc: 0.5920
+110288/110288 [==============================] - 27s 249us/step - loss: 1.2730 - acc: 0.6519 - val_loss: nan - val_acc: 0.6868
 Epoch 3/10
-110288/110288 [==============================] - 34s 307us/step - loss: 1.5055 - acc: 0.5963 - val_loss: nan - val_acc: 0.6237
+110288/110288 [==============================] - 28s 250us/step - loss: 1.0020 - acc: 0.7105 - val_loss: nan - val_acc: 0.7520
 Epoch 4/10
-110288/110288 [==============================] - 34s 306us/step - loss: 1.3374 - acc: 0.6254 - val_loss: nan - val_acc: 0.6502
+110288/110288 [==============================] - 28s 250us/step - loss: 0.7813 - acc: 0.7629 - val_loss: nan - val_acc: 0.7826
 Epoch 5/10
-110288/110288 [==============================] - 34s 306us/step - loss: 1.2383 - acc: 0.6484 - val_loss: nan - val_acc: 0.6777
+110288/110288 [==============================] - 28s 250us/step - loss: 0.6802 - acc: 0.7898 - val_loss: nan - val_acc: 0.8497
 Epoch 6/10
-110288/110288 [==============================] - 34s 308us/step - loss: 1.1514 - acc: 0.6715 - val_loss: nan - val_acc: 0.6965
+110288/110288 [==============================] - 28s 250us/step - loss: 0.4918 - acc: 0.8463 - val_loss: nan - val_acc: 0.8872
 Epoch 7/10
-110288/110288 [==============================] - 34s 307us/step - loss: 1.0833 - acc: 0.6871 - val_loss: nan - val_acc: 0.7127
+110288/110288 [==============================] - 28s 250us/step - loss: 0.3762 - acc: 0.8865 - val_loss: nan - val_acc: 0.9184
 Epoch 8/10
-110288/110288 [==============================] - 34s 308us/step - loss: 1.0208 - acc: 0.7008 - val_loss: nan - val_acc: 0.7253
+110288/110288 [==============================] - 28s 250us/step - loss: 0.2834 - acc: 0.9155 - val_loss: nan - val_acc: 0.9248
 Epoch 9/10
-110288/110288 [==============================] - 34s 308us/step - loss: 0.9781 - acc: 0.7096 - val_loss: nan - val_acc: 0.7305
+110288/110288 [==============================] - 28s 250us/step - loss: 0.4637 - acc: 0.8614 - val_loss: nan - val_acc: 0.9454
 Epoch 10/10
-110288/110288 [==============================] - 34s 308us/step - loss: 0.9415 - acc: 0.7165 - val_loss: nan - val_acc: 0.7357
-new jersey est parfois agréable au l&#39;automne mais il est parfois en en &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt;
+110288/110288 [==============================] - 28s 250us/step - loss: 0.2113 - acc: 0.9392 - val_loss: nan - val_acc: 0.9557
+new jersey est parfois calme pendant l&#39; automne et est est neigeux en avril &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt;
 </pre>
 </div>
 </div>
@@ -13041,7 +13143,7 @@ new jersey est parfois agréable au l&#39;automne mais il est parfois en en &lt;
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="prompt input_prompt">In&nbsp;[29]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">final_predictions</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x_tk</span><span class="p">,</span> <span class="n">y_tk</span><span class="p">):</span>
@@ -13109,56 +13211,50 @@ new jersey est parfois agréable au l&#39;automne mais il est parfois en en &lt;
 _________________________________________________________________
 Layer (type)                 Output Shape              Param #   
 =================================================================
-embedding_7 (Embedding)      (None, 15, 64)            12736     
+embedding_18 (Embedding)     (None, 15, 128)           25472     
 _________________________________________________________________
-bidirectional_11 (Bidirectio (None, 42)                14448     
+bidirectional_27 (Bidirectio (None, 256)               197376    
 _________________________________________________________________
-repeat_vector_5 (RepeatVecto (None, 21, 42)            0         
+repeat_vector_18 (RepeatVect (None, 21, 256)           0         
 _________________________________________________________________
-bidirectional_12 (Bidirectio (None, 21, 42)            10752     
+bidirectional_28 (Bidirectio (None, 21, 256)           295680    
 _________________________________________________________________
-lstm_23 (LSTM)               (None, 21, 21)            5376      
+time_distributed_37 (TimeDis (None, 21, 344)           88408     
 _________________________________________________________________
-dense_19 (Dense)             (None, 21, 344)           7568      
+dropout_23 (Dropout)         (None, 21, 344)           0         
 _________________________________________________________________
-dropout_9 (Dropout)          (None, 21, 344)           0         
-_________________________________________________________________
-dense_20 (Dense)             (None, 21, 688)           237360    
-_________________________________________________________________
-dropout_10 (Dropout)         (None, 21, 688)           0         
-_________________________________________________________________
-dense_21 (Dense)             (None, 21, 344)           237016    
+time_distributed_38 (TimeDis (None, 21, 344)           118680    
 =================================================================
-Total params: 525,256
-Trainable params: 525,256
+Total params: 725,616
+Trainable params: 725,616
 Non-trainable params: 0
 _________________________________________________________________
 Train on 110288 samples, validate on 27573 samples
 Epoch 1/10
-110288/110288 [==============================] - 34s 306us/step - loss: 3.1281 - acc: 0.4346 - val_loss: nan - val_acc: 0.4895
+110288/110288 [==============================] - 28s 257us/step - loss: 2.0675 - acc: 0.5285 - val_loss: nan - val_acc: 0.6505
 Epoch 2/10
-110288/110288 [==============================] - 31s 284us/step - loss: 2.0284 - acc: 0.5260 - val_loss: nan - val_acc: 0.5808
+110288/110288 [==============================] - 25s 225us/step - loss: 1.1637 - acc: 0.6739 - val_loss: nan - val_acc: 0.7170
 Epoch 3/10
-110288/110288 [==============================] - 31s 284us/step - loss: 1.5245 - acc: 0.5928 - val_loss: nan - val_acc: 0.6321
+110288/110288 [==============================] - 25s 225us/step - loss: 0.8934 - acc: 0.7327 - val_loss: nan - val_acc: 0.7793
 Epoch 4/10
-110288/110288 [==============================] - 32s 286us/step - loss: 1.3119 - acc: 0.6326 - val_loss: nan - val_acc: 0.6636
+110288/110288 [==============================] - 25s 225us/step - loss: 0.6660 - acc: 0.7910 - val_loss: nan - val_acc: 0.8345
 Epoch 5/10
-110288/110288 [==============================] - 31s 284us/step - loss: 1.1840 - acc: 0.6606 - val_loss: nan - val_acc: 0.6934
+110288/110288 [==============================] - 25s 225us/step - loss: 0.8025 - acc: 0.7565 - val_loss: nan - val_acc: 0.7735
 Epoch 6/10
-110288/110288 [==============================] - 31s 284us/step - loss: 1.1011 - acc: 0.6826 - val_loss: nan - val_acc: 0.7105
+110288/110288 [==============================] - 25s 225us/step - loss: 0.4899 - acc: 0.8424 - val_loss: nan - val_acc: 0.8846
 Epoch 7/10
-110288/110288 [==============================] - 31s 281us/step - loss: 1.0475 - acc: 0.6963 - val_loss: nan - val_acc: 0.7173
+110288/110288 [==============================] - 25s 225us/step - loss: 0.3558 - acc: 0.8894 - val_loss: nan - val_acc: 0.9302
 Epoch 8/10
-110288/110288 [==============================] - 31s 281us/step - loss: 0.9930 - acc: 0.7091 - val_loss: nan - val_acc: 0.7270
+110288/110288 [==============================] - 25s 225us/step - loss: 0.2648 - acc: 0.9213 - val_loss: nan - val_acc: 0.9428
 Epoch 9/10
-110288/110288 [==============================] - 31s 283us/step - loss: 0.9568 - acc: 0.7165 - val_loss: nan - val_acc: 0.7360
+110288/110288 [==============================] - 25s 225us/step - loss: 0.2274 - acc: 0.9317 - val_loss: nan - val_acc: 0.9443
 Epoch 10/10
-110288/110288 [==============================] - 31s 282us/step - loss: 0.9245 - acc: 0.7233 - val_loss: nan - val_acc: 0.7394
+110288/110288 [==============================] - 25s 225us/step - loss: 0.1875 - acc: 0.9437 - val_loss: nan - val_acc: 0.9577
 Sample 1:
-il a vu un vieux camion rouge &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt;
+il a vu un vieux camion jaune &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt;
 Il a vu un vieux camion jaune
 Sample 2:
-new jersey est parfois chaud pendant l&#39;automne mais il est est en en &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt;
+new jersey est parfois calme pendant l&#39; automne et il est neigeux en avril &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt;
 new jersey est parfois calme pendant l&#39; automne et il est neigeux en avril &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt; &lt;PAD&gt;
 </pre>
 </div>
@@ -13215,7 +13311,7 @@ $ python -m nbconvert machine_translation.ipynb</code></pre>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Save before you run this cell!</span>
@@ -13232,14 +13328,14 @@ $ python -m nbconvert machine_translation.ipynb</code></pre>
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[2]:</div>
+<div class="prompt output_prompt">Out[17]:</div>
 
 
 
 
 <div class="output_text output_subarea output_execute_result">
 <pre>[&#39;[NbConvertApp] Converting notebook machine_translation.ipynb to html&#39;,
- &#39;[NbConvertApp] Writing 305996 bytes to machine_translation.html&#39;]</pre>
+ &#39;[NbConvertApp] Writing 354326 bytes to machine_translation.html&#39;]</pre>
 </div>
 
 </div>
